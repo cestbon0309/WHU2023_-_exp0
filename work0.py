@@ -10,6 +10,8 @@ import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
+import networkx as nx
+import csv
 
 driver = None
 
@@ -122,12 +124,47 @@ def gen_plot():#生成人物出场率图表
     ax.set_yticklabels(nms,fontsize=14, fontproperties=plot_font)
     plt.show()
 
+def gen_role_graph():#生成人物关系无向图
+    with open('roles.txt','r',encoding='utf-8') as f:
+        roles = [x.strip('\n') for x in f.readlines()]
+        print(roles)
+    with open('content.txt','r',encoding='utf-8') as f:
+        contents = f.read().splitlines()
+    graph = nx.Graph()
+    for name in roles:
+        graph.add_node(name,weight=sum(x.count(name) for x in contents))
+    edges = []
+    for role0 in roles:
+        for role1 in roles:
+            weight = 0
+            for sentence in contents:
+                if role0!= role1 and role0 in sentence and role1 in sentence:
+                    weight += 1
+            if weight!=0:
+                graph.add_edge(role0,role1,weight=weight)
+                edges.append([role0,role1,weight,'undirected'])
+    nodes = []
+    for name in roles:
+        nodes.append([name,name,sum(x.count(name) for x in contents)])
+    print(nodes)
+    with open('nodes.csv','w',encoding='utf-8',newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Id','Label','Weight'])
+        writer.writerows(nodes)
+    with open('edges.csv','w',encoding='utf-8',newline='') as f:
+        writer=csv.writer(f)
+        writer.writerow(['source','target','weight','type'])
+        writer.writerows(edges)
+
+    
+
 if __name__ == '__main__':
-    init_driver()
-    url = r'https://baike.baidu.com/item/%E4%BA%BA%E6%B0%91%E7%9A%84%E5%90%8D%E4%B9%89/17545218'
-    driver.get(url)
+    #init_driver()
+    #url = r'https://baike.baidu.com/item/%E4%BA%BA%E6%B0%91%E7%9A%84%E5%90%8D%E4%B9%89/17545218'
+    #driver.get(url)
     #get_roles()
     #get_dramalist()
     #split_with_jieba()
-    gen_plot()
-    driver.quit()
+    #gen_plot()
+    #driver.quit()
+    gen_role_graph()
